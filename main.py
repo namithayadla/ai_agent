@@ -30,23 +30,34 @@ messages = [
     types.Content(role="user", parts=[types.Part(text=prompt)])
 ]
 verbose = "--verbose" in sys.argv
-response = client.models.generate_content(
-    model=model_name,
-    contents=messages,
-    config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt) 
-)
+count = 0
+while count < 20:
+    response = client.models.generate_content(
+        model=model_name,
+        contents=messages,
+        config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt) 
+    )
 
-if response.function_calls:
-    function_call = response.function_calls[0]
-    function_call_result = call_function(function_call, verbose=verbose)
-    if not function_call_result.parts or not hasattr(function_call_result.parts[0], "function_response"):
-        raise Exception("FATAL")
-    if verbose:
-        print(f"-> {function_call_result.parts[0].function_response.response}")
-else:
-    if verbose:
-        print(f"User prompt: {response.text}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-    else:
-        print(response.text)
+    for candidate in response.candidates:
+        messages.append(candidate.content)
+
+    if response.function_calls:
+        function_call = response.function_calls[0]
+        function_call_result = call_function(function_call, verbose=verbose)
+        function_responses = types.Content(role="user", parts=function_call_result.parts)
+        
+        messages.append(function_responses)
+        if not function_call_result.parts or not hasattr(function_call_result.parts[0], "function_response"):
+            raise Exception("FATAL")
+        if verbose:
+            print(f"-> {function_call_result.parts[0].function_response.response}")
+    if response.text:
+        if verbose:
+            print(f"User prompt: {response.text}")
+            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+            sys.exit()
+        else:
+            print(response.text)
+            sys.exit()
+    count += 1
