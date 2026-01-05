@@ -7,12 +7,14 @@ class Calculator:
             "-": lambda a, b: a - b,
             "*": lambda a, b: a * b,
             "/": lambda a, b: a / b,
+            "**": lambda a, b: a ** b,  # Add exponentiation operator
         }
         self.precedence = {
             "+": 1,
             "-": 1,
             "*": 2,
             "/": 2,
+            "**": 3,  # Set precedence for exponentiation
         }
 
     def evaluate(self, expression):

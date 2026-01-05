@@ -22,10 +22,7 @@ When a user asks a question or makes a request, make a function call plan. You c
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 """
-prompt = " ".join(sys.argv[1:])
-if len(prompt) < 1:
-    print("error")
-    sys.exit(1)
+prompt = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "Hello"
 messages = [
     types.Content(role="user", parts=[types.Part(text=prompt)])
 ]
@@ -52,12 +49,10 @@ while count < 20:
         if verbose:
             print(f"-> {function_call_result.parts[0].function_response.response}")
     if response.text:
+        print(response.text)
+        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
         if verbose:
             print(f"User prompt: {response.text}")
-            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-            sys.exit()
-        else:
-            print(response.text)
-            sys.exit()
+        sys.exit()
     count += 1
